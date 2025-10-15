@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Momentos José y Sophia</title>
+    <!-- Incluye Firebase Core y Realtime Database v8 -->
+    <!-- Se utiliza la versión 8 para mantener la compatibilidad con el formato de tu script de inicialización -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f4f7f9;
+            color: #1a1a1a;
+            text-align: center;
+        }
+
+        h1 {
+            color: #3f51b5;
+            margin-bottom: 30px;
+        }
+
+        .container {
+            display: flex;
+            justify-content: space-around;
+            flex-wrap: wrap;
+            gap: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .counter-section {
+            background-color: #ffffff;
+            border-radius: 15px;
+            padding: 20px;
+            width: 45%;
+            min-width: 300px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        
+        /* Estilos Específicos de José (AZUL) */
+        #jose-section {
+            border: 4px solid #3f51b5; /* Azul principal */
+        }
+        #jose-section h2 {
+            color: #3f51b5;
+            border-bottom: 2px solid #9fa8da;
+        }
+        #jose-section .counter-display {
+            color: #1a237e;
+        }
+        #jose-section .controls button {
+            background-color: #5c6bc0;
+        }
+        #jose-section .controls button:hover {
+            background-color: #303f9f;
+        }
+        #jose-section .log-table-container {
+            border: 1px solid #7986cb;
+        }
+        #jose-section .log-table th {
+            background-color: #7986cb;
+        }
+        #jose-section .log-table tr:nth-child(even) {
+            background-color: #e8eaf6;
+        }
+
+
+        /* Estilos Específicos de Sophia (ROSA) */
+        #sophia-section {
+            border: 4px solid #ec407a; /* Rosa principal */
+        }
+        #sophia-section h2 {
+            color: #ec407a;
+            border-bottom: 2px solid #f48fb1;
+        }
+        #sophia-section .counter-display {
+            color: #880e4f;
+        }
+        #sophia-section .controls button {
+            background-color: #f48fb1;
+        }
+        #sophia-section .controls button:hover {
+            background-color: #d81b60;
+        }
+        #sophia-section .log-table-container {
+            border: 1px solid #f06292;
+        }
+        #sophia-section .log-table th {
+            background-color: #f48fb1;
+        }
+        #sophia-section .log-table tr:nth-child(even) {
+            background-color: #fde8ed;
+        }
+
+        h2 {
+            margin-top: 0;
+            padding-bottom: 10px;
+        }
+
+        .counter-display {
+            font-size: 4em;
+            font-weight: bold;
+            margin: 15px 0;
+        }
+
+        .controls button {
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            margin: 5px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1.1em;
+            transition: background-color 0.3s ease;
+        }
+
+        .log-table-container {
+            margin-top: 20px;
+            max-height: 300px;
+            overflow-y: auto;
+            border-radius: 8px;
+        }
+        
+        .log-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9em;
+        }
+
+        .log-table th, .log-table td {
+            border: 1px solid #ccc;
+            padding: 8px;
+            text-align: left;
+        }
+
+        .log-table th {
+            color: white;
+            position: sticky;
+            top: 0;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Momentos José y Sophia</h1>
+
+    <div class="container">
+        
+        <div id="jose-section" class="counter-section">
+            <h2>José</h2>
+            <div id="jose-count" class="counter-display">...</div>
+            <div class="controls">
+                <button onclick="actualizarContador('jose', 1)">Aumentar (+) ❤️</button>
+                <button onclick="actualizarContador('jose', -1)">Disminuir (-) 💔</button>
+            </div>
+            <h3>Registro de Cambios</h3>
+            <div class="log-table-container">
+                <table class="log-table">
+                    <thead>
+                        <tr>
+                            <th>Acción</th>
+                            <th>Fecha y Hora</th>
+                        </tr>
+                    </thead>
+                    <tbody id="jose-log"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <div id="sophia-section" class="counter-section">
+            <h2>Sophia</h2>
+            <div id="sophia-count" class="counter-display">...</div>
+            <div class="controls">
+                <button onclick="actualizarContador('sophia', 1)">Aumentar (+) ❤️</button>
+                <button onclick="actualizarContador('sophia', -1)">Disminuir (-) 💔</button>
+            </div>
+            <h3>Registro de Cambios</h3>
+            <div class="log-table-container">
+                <table class="log-table">
+                    <thead>
+                        <tr>
+                            <th>Acción</th>
+                            <th>Fecha y Hora</th>
+                        </tr>
+                    </thead>
+                    <tbody id="sophia-log"></tbody>
+                </table>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // --------------------------------------------------------------------------------
+        // CONFIGURACIÓN DE FIREBASE (PROPORCIONADA POR EL USUARIO)
+        // --------------------------------------------------------------------------------
+        const firebaseConfig = {
+            apiKey: "AIzaSyBxesuLIjG7nc3Ua5YfUfsMo9eI-DLacNw",
+            authDomain: "j-y-s-8e6b3.firebaseapp.com",
+            databaseURL: "https://j-y-s-8e6b3-default-rtdb.firebaseio.com",
+            projectId: "j-y-s-8e6b3",
+            storageBucket: "j-y-s-8e6b3.firebasestorage.app",
+            messagingSenderId: "11919543291",
+            appId: "1:11919543291:web:89e5b76088a783bd54995e",
+            measurementId: "G-FP98453S4H"
+        };
+
+        // Inicializar Firebase
+        firebase.initializeApp(firebaseConfig);
+        // NO necesitamos getAnalytics() en este archivo HTML.
+        const database = firebase.database();
+        const refDatos = database.ref('contadores'); // Nodo principal para los datos
+
+        // --------------------------------------------------------------------------------
+        // CONSTANTES Y ESTADO INICIAL
+        // --------------------------------------------------------------------------------
+        const VALOR_MINIMO = 4;
+
+        // Registro inicial solicitado para Sophia (Aumento 14/10/2025 11:31:17 p.m)
+        const REGISTRO_INICIAL_SOPHIA = { 
+            accion: 'Aumentado (❤️) - Inicial (Editable)', 
+            fecha: '14/10/2025 23:31:17' 
+        };
+
+        let estado = {
+            conteoJose: VALOR_MINIMO,
+            registroJose: [],
+            conteoSophia: VALOR_MINIMO,
+            registroSophia: []
+        };
+
+        // --------------------------------------------------------------------------------
+        // FUNCIONES DE SINCRONIZACIÓN Y UI
+        // --------------------------------------------------------------------------------
+
+        // 1. Guarda el estado completo en la 'nube' (usado solo en la inicialización)
+        function guardarEstado() {
+            refDatos.set(estado)
+                .catch((error) => console.error("Error al guardar en Firebase:", error));
+        }
+
+        // 2. Renderiza el valor del contador
+        function renderizarContador(persona) {
+            const displayConteo = document.getElementById(`${persona}-count`);
+            const conteo = persona === 'jose' ? estado.conteoJose : estado.conteoSophia;
+            displayConteo.textContent = conteo;
+        }
+
+        // 3. Renderiza el historial de registros
+        function renderizarRegistro(persona) {
+            const cuerpoRegistro = document.getElementById(`${persona}-log`);
+            const registro = persona === 'jose' ? estado.registroJose : estado.registroSophia;
+            
+            cuerpoRegistro.innerHTML = '';
+            
+            // Recorrer el registro de atrás hacia adelante para mostrar el más reciente arriba
+            for (let i = registro.length - 1; i >= 0; i--) {
+                const entrada = registro[i];
+                const fila = cuerpoRegistro.insertRow();
+                fila.insertCell(0).textContent = entrada.accion;
+                fila.insertCell(1).textContent = entrada.fecha;
+            }
+        }
+
+        // 4. Actualiza el contador y log (usando transacción para atomicidad y seguridad)
+        function actualizarContador(persona, cambio) {
+            const conteoKey = persona === 'jose' ? 'conteoJose' : 'conteoSophia';
+            const registroKey = persona === 'jose' ? 'registroJose' : 'registroSophia';
+            
+            // Transacción para actualizar el contador de forma segura en la 'nube'
+            database.ref(`contadores/${conteoKey}`).transaction((conteoActual) => {
+                // Si la DB está vacía, usa el valor por defecto/local como punto de partida
+                if (conteoActual === null) conteoActual = persona === 'jose' ? estado.conteoJose : estado.conteoSophia;
+                let nuevoConteo = conteoActual + cambio;
+
+                if (cambio < 0 && nuevoConteo < VALOR_MINIMO) {
+                    // Usamos un alert temporal aquí, ya que el código no tiene un modal personalizado.
+                    // En una app real, usarías un modal o mensaje.
+                    console.error(`El contador de ${persona.charAt(0).toUpperCase() + persona.slice(1)} no puede bajar de ${VALOR_MINIMO}.`);
+                    return; // Aborta la transacción (vuelve al valor actual)
+                }
+                return nuevoConteo; // Confirma la nueva cuenta
+            }, (error, committed, snapshot) => {
+                if (error || !committed) return; // Si hay error o se abortó, salir.
+                
+                // Si la transacción del contador fue exitosa, actualiza el log
+                database.ref(`contadores/${registroKey}`).once('value', (logSnapshot) => {
+                    let registro = logSnapshot.val() || [];
+                    
+                    if (cambio > 0) {
+                        const ahora = new Date();
+                        // Formato de hora localizado (ej: 15/10/2025 16:42:43)
+                        const marcaTiempo = ahora.toLocaleDateString('es-ES') + ' ' + ahora.toLocaleTimeString('es-ES');
+                        registro.push({ accion: 'Aumentado (❤️)', fecha: marcaTiempo });
+                    } else if (cambio < 0) {
+                        if (registro.length > 0) {
+                            registro.pop(); // Si se disminuyó y hay registros, eliminamos el último.
+                        }
+                    }
+                    
+                    // Guardar el log actualizado
+                    database.ref(`contadores/${registroKey}`).set(registro);
+                });
+            });
+        }
+
+        // 5. Función de Inicialización (Escucha en tiempo real)
+        function iniciar() {
+            // Escucha de cambios en la base de datos en tiempo real
+            refDatos.on('value', (snapshot) => {
+                const data = snapshot.val();
+                
+                // --- Lógica de Inicialización (solo la primera vez) ---
+                if (!data) {
+                    console.log("Base de datos de Firebase vacía. Inicializando con valores por defecto.");
+                    estado.conteoJose = VALOR_MINIMO;
+                    estado.registroJose = [];
+                    estado.conteoSophia = VALOR_MINIMO + 1; // 4 + 1 por el registro inicial de aumento
+                    estado.registroSophia = [REGISTRO_INICIAL_SOPHIA]; // Añade el registro de Sophia
+                    guardarEstado(); 
+                    return;
+                }
+
+                // --- Lógica de Sincronización (cada vez que hay un cambio) ---
+                // Si hay datos, actualiza el estado local con los datos de la 'nube'
+                estado = {
+                    conteoJose: data.conteoJose || VALOR_MINIMO,
+                    registroJose: data.registroJose || [],
+                    conteoSophia: data.conteoSophia || VALOR_MINIMO,
+                    registroSophia: data.registroSophia || [],
+                };
+                
+                // Renderizar la interfaz con los nuevos datos
+                renderizarContador('jose');
+                renderizarRegistro('jose');
+                renderizarContador('sophia');
+                renderizarRegistro('sophia');
+            });
+        }
+
+        iniciar();
+    </script>
+
+</body>
+</html>
